@@ -8,38 +8,64 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Tag;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class PostController extends Controller
 {
-    public function index()
+    /**
+     * @return AnonymousResourceCollection
+     */
+    public function index(): AnonymousResourceCollection
     {
         $posts = Post::with(['user', 'tags'])->paginate(15);
         return PostResource::collection($posts);
     }
 
-    public function show(Post $post)
+    /**
+     * @param Post $post
+     * @return PostResource
+     */
+    public function show(Post $post): PostResource
     {
         return new PostResource($post->load(['user', 'tags']));
     }
 
-    public function store(StorePostRequest $request)
+    /**
+     * @param StorePostRequest $request
+     * @return JsonResponse
+     */
+    public function store(StorePostRequest $request): JsonResponse
     {
-        $post = auth()->user()->posts()->create($request->validated());
+        /** @var User $user */
+        $user = auth()->user();
+
+        $post = $user->posts()->create($request->validated());
 
         return (new PostResource($post->load('user')))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function update(UpdatePostRequest $request, Post $post)
+    /**
+     * @param UpdatePostRequest $request
+     * @param Post $post
+     * @return PostResource
+     */
+    public function update(UpdatePostRequest $request, Post $post): PostResource
     {
         $post->update($request->validated());
 
         return new PostResource($post->load('user'));
     }
 
-    public function destroy(Post $post)
+    /**
+     * @param Post $post
+     * @return Response
+     */
+    public function destroy(Post $post): Response
     {
         $post->delete();
 
@@ -53,7 +79,10 @@ class PostController extends Controller
      */
     public function attachTags(AttachTagsRequest $request, Post $post): PostResource
     {
-        $post->tags()->syncWithoutDetaching($request->validated('tag_ids'));
+        /** @var array<int> $tagIds */
+        $tagIds = $request->validated('tag_ids');
+
+        $post->tags()->syncWithoutDetaching($tagIds);
 
         return new PostResource($post->load('tags'));
     }

@@ -6,12 +6,15 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePostRequest extends FormRequest
 {
-    public function authorize()
+    public function authorize(): true
     {
         return true;
     }
 
-    public function rules()
+    /**
+     * @return array<string, string>
+     */
+    public function rules(): array
     {
         return [
             'title' => 'sometimes|required|string|max:255',
@@ -20,7 +23,10 @@ class UpdatePostRequest extends FormRequest
         ];
     }
 
-    public function messages()
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
     {
         return [
             'title.required' => 'Заголовок требуется.',
